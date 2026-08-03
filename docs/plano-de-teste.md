@@ -358,16 +358,14 @@ seguindo o padrão BUG-08, BUG-09...
    [docs/bugs-encontrados.md](bugs-encontrados.md) (campo Colaborador nos
    modos "Sem Colaborador"/"Subárea"; `data-bs-dismiss` no modal de Termos;
    investigar a causa raiz do BUG-03).
-2. Alinhar a especificação da US05 à tela realmente implementada, ou
-   corrigir a tela para atender ao critério de aceitação descrito.
-3. Adicionar atributos `data-cy`/`data-testid` nos elementos-chave dos
+2. Adicionar atributos `data-cy`/`data-testid` nos elementos-chave dos
    formulários — reduziria o acoplamento dos testes à estrutura de
    ids/classes do Rails/Bootstrap, tornando a suíte mais resiliente a
    refatorações visuais.
-4. Expor um endpoint (mesmo que interno/autenticado) para provisionamento
+3. Expor um endpoint (mesmo que interno/autenticado) para provisionamento
    de massa de dados de teste, eliminando a necessidade da estratégia de
    retentativa descrita na seção 2.3 e tornando os testes de vínculo de
    ativos determinísticos.
-5. Padronizar mensagens de validação (a mistura de validação nativa HTML5,
+4. Padronizar mensagens de validação (a mistura de validação nativa HTML5,
    alertas via `window.alert`, e flash messages do servidor dificulta uma
    experiência de erro consistente para o usuário final e para automação).
