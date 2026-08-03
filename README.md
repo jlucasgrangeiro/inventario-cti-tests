@@ -11,13 +11,7 @@ Ceará (PGE-CE) — vaga de Analista de Testes.
 > divergência de especificação foram encontrados e documentados — ver
 > [Achados](#achados-bugs-e-divergência-de-especificação).
 
-## O que o desafio pediu
-
-O enunciado (`Teste Prático - Analista de Testes - PGE-CE.pdf`) pede uma
-suíte Cypress cobrindo 5 histórias de usuário do sistema Inventário CTI —
-Cadastro de Atribuições, Editar Atribuições, Geração de Termos, Relatório
-de Movimentação de Ativos e Relatório de Atribuições por Área — com casos
-positivos e negativos, avaliada em 4 frentes: **estrutura do projeto**,
+**estrutura do projeto**,
 **plano de teste e documentação**, **implementação dos testes** e
 **evidências/relatórios com proposta de melhorias**.
 
