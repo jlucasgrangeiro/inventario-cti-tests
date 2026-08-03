@@ -28,20 +28,6 @@ ausência de dados, ações bloqueadas). Onde a aplicação real diverge do
 documento do desafio ou apresenta defeito, o comportamento **real** é o que
 foi automatizado e o desvio é documentado (seção 6).
 
-### 1.2 Fora de escopo
-
-- Testes de carga/performance e testes de segurança (pentest, OWASP).
-- Testes de API isolados (a aplicação não expõe uma API pública/REST
-  documentada; o único uso de `cy.request` na suíte é para reaproveitar a
-  sessão autenticada do navegador e buscar PDFs/listagens já renderizados
-  pelo servidor, não para testar contratos de API).
-- Telas fora das 5 histórias de usuário (Ativos, Licenças, Dashboard,
-  Cadastros administrativos), exceto o necessário como apoio de massa de
-  dados (ex.: `/portal_service/deposits` para localizar ativos disponíveis).
-- Testes cross-browser (a suíte roda em Electron/Chromium headless, padrão
-  do `cypress run`; ver seção 5 sobre a limitação de browsers disponíveis no
-  ambiente de execução usado nesta entrega).
-
 ---
 
 ## 2. Estratégia e abordagem
@@ -63,79 +49,8 @@ foi automatizado e o desvio é documentado (seção 6).
   `pdf-parse` para extrair texto de PDFs baixados/buscados e permitir
   asserções de conteúdo (US03 e US04).
 
-### 2.2 Engenharia reversa da aplicação (não havia documentação técnica)
 
-O desafio fornece apenas a história de usuário em linguagem de negócio, sem
-Swagger/documentação de seletores. Antes de escrever qualquer spec definitiva,
-a aplicação real foi explorada sistematicamente (login, HTML renderizado,
-requisições) para extrair:
-
-- Seletores estáveis (ids, names) dos formulários — a aplicação é uma stack
-  Rails + jQuery + Bootstrap + Select2, sem atributos `data-cy`/`data-testid`,
-  então os Page Objects usam ids gerados pelo Rails (`#set_area`,
-  `#bond_modality_presencial`, `#collaborators`, etc.), que se mostraram
-  estáveis entre execuções.
-- Mensagens reais de sucesso/erro (ex.: `"Ativos vinculados a: X, Parabéns!"`,
-  `"Vínculo de X, atualizado com sucesso!"`, `"Sem movimentações para: X"`),
-  usadas nas asserções em vez de texto suposto.
-- Endpoints usados para gerar PDF (ver 2.4).
-
-Essa etapa evitou o principal risco de suítes escritas "no escuro" contra
-telas nunca inspecionadas: seletores/mensagens supostos que não existem na
-aplicação real.
-
-### 2.3 Massa de dados e o problema do "ativo disponível"
-
-O ambiente de QA é **compartilhado** entre candidatos (o dashboard mostra
-centenas de atribuições com a observação *"Atribuição criada via automação de
-testes (Cypress)"* de execuções anteriores) e não expõe uma API para
-provisionamento de massa de dados. Os testes que precisam de dados próprios
-os criam via UI (US01 é usada como setup para US02).
-
-Para vincular um ativo, é necessário um tombo com status **DISPONÍVEL**.
-A tela "Depósito CTI" (`/portal_service/deposits`) lista os ativos
-disponíveis, mas esse status nem sempre reflete a realidade: em uma
-amostragem manual de 5 tentativas, 1 foi recusada pelo servidor
-(`"Este Ativo já está vinculado!"`) mesmo o ativo aparecendo como
-DISPONÍVEL no momento da consulta — documentado como **BUG-03** em
-[docs/bugs-encontrados.md](bugs-encontrados.md). Pode ser condição de
-corrida (outro candidato usou o ativo entre a listagem e o envio do
-formulário, já que o ambiente é compartilhado) ou uma dessincronia real de
-dados no backend — não foi possível confirmar a causa raiz sem acesso ao
-servidor.
-
-**Mitigação implementada** (`cy.obterTombosDisponiveis()` +
-`NovaAtribuicaoPage.salvarComPrimeiroAtivoAceito()`):
-1. Busca candidatos em **3 páginas aleatórias** da listagem do Depósito CTI
-   (não sempre a página 1, que concentra a maior concorrência entre
-   execuções simultâneas de outros candidatos).
-2. Embaralha os candidatos.
-3. Tenta salvar com o primeiro; se o servidor recusar por "já vinculado",
-   remove a linha e tenta o próximo candidato — até aceitar ou esgotar a
-   lista.
-
-Isso tornou a suíte estável mesmo em um ambiente de dados mutável e
-compartilhado, ao custo de tempo de execução um pouco maior nos cenários que
-criam/editam vínculos.
-
-### 2.4 Validação de PDFs gerados (US03 e US04)
-
-Os botões "Gerar" (termos) e "Gerar Relatório" (relatórios) não fazem
-download de arquivo: eles navegam (ou abrem em nova aba) para uma URL que
-retorna o PDF diretamente (ex.:
-`/portal_service/bonds/term_responsibility_asset?bonds_ids=..&term_type=..`,
-`/portal_service/reports/pdf_create?area_name=..&initial_date=..&final_date=..`).
-Como o Cypress não suporta múltiplas abas/janelas do navegador, a suíte:
-
-1. Realiza a interação de UI normalmente até o ponto de geração (validando
-   que o botão/link existe e aponta para a URL esperada).
-2. Busca essa mesma URL via `cy.request()` — reaproveitando os cookies de
-   sessão já autenticados pelo `cy.login()` — obtendo os bytes do PDF.
-3. Salva em `cypress/downloads/` e usa `cy.task("readPdfText", ...)` para
-   extrair o texto e validar os elementos obrigatórios (título, CPF, Área,
-   seção "ATIVOS ATRIBUÍDOS", assinatura, agrupamento por área/data, etc.).
-
-### 2.5 Ferramentas
+### 2.2 Ferramentas
 
 | Ferramenta | Uso |
 |---|---|
@@ -178,61 +93,7 @@ Como o Cypress não suporta múltiplas abas/janelas do navegador, a suíte:
 
 ---
 
-## 5. Riscos e limitações
-
-| Risco / limitação | Impacto | Mitigação |
-|---|---|---|
-| Ambiente de QA compartilhado entre candidatos, com dados mutáveis | Flakiness em cenários de criação/vínculo de ativos | Estratégia de candidatos múltiplos + retentativa (seção 2.3) |
-| Ausência de API para massa de dados dedicada | Setup mais lento (via UI) e specs de edição dependem de criação prévia | US02 cria seus próprios vínculos de teste num hook `before` |
-| Ambiente de execução sem Chrome/Edge plenamente utilizável pelo Cypress (apenas Electron headless disponível na máquina usada nesta entrega) | Sem cobertura cross-browser nesta entrega | Suíte estruturada para rodar em qualquer browser suportado (`cypress run --browser chrome`); recomenda-se incluir Chrome no pipeline de CI/máquina do avaliador |
-| Aplicação sem `data-cy`/`data-testid` | Seletores por id/estrutura, mais sensíveis a mudanças de layout | Seletores centralizados nos Page Objects — mudança de UI exige ajuste em um único lugar |
-| Botões "Gerar" abrem PDF em nova aba (não suportado nativamente pelo Cypress) | Não é possível validar o clique + nova aba de ponta a ponta na mesma sessão de teste | Validação por `cy.request()` direto à URL de geração, reaproveitando a sessão (seção 2.4) |
-| Mensagens de validação nativa do HTML5 (`required`) não usam texto customizado consistente | Testes negativos de campo obrigatório verificam `element.validity.valid`/permanência de URL, não uma mensagem de erro fixa |
-
----
-
-## 6. Achados de especificação e defeitos
-
-### 6.1 US05 não corresponde à tela real (achado de especificação)
-
-No documento do desafio, a **US05** repete literalmente título, narrativa e
-critérios de aceitação da **US04** (mesmas colunas: Tombo, Nº de Série,
-Lotação Anterior/Atual, Colaborador; mesmo comportamento de agrupamento por
-área e data; mesmo filtro de Período), diferindo apenas no "Fluxo no
-Sistema" (`Atribuições por Área` em vez de `Movimentação de Ativos`).
-
-Ao inspecionar a tela real (`/portal_service/reports/assignments_by_area`),
-o comportamento é **completamente diferente** do descrito — não é uma
-variação do relatório de movimentação, e sim um painel de
-conformidade/estatística de atribuições por área:
-
-- Não existe filtro de **Período**; existe um seletor de **Tipo**
-  (Sintético/Analítico), obrigatório, ausente na US04.
-- **Modo Sintético**: exibe gráficos de rosca e totais (Atribuições por
-  Modalidade, por Colaboradores, por Termo de Responsabilidade/Empréstimo
-  assinado, por Sistema Operacional, por Pacote Office) — nenhuma
-  informação de ativo individual.
-- **Modo Analítico**: lista atribuições agrupadas por **colaborador** (não
-  por área+data), com colunas Tombo, Descrição, Modalidade, situação do
-  Termo e Status — sem **Nº de Série** nem **Lotação Anterior/Atual**,
-  que são justamente as colunas centrais pedidas no critério de aceitação
-  da US05 no documento do desafio.
-- O link "Gerar Relatório" só reflete os filtros aplicados **depois** de
-  clicar em "Pesquisar" (o `href` é renderizado pelo servidor a cada busca);
-  clicar em "Gerar Relatório" sem pesquisar antes gera um PDF sem os
-  filtros esperados.
-
-Os testes em `cypress/e2e/05-relatorio-atribuicoes-area` validam o
-comportamento **real** implementado (modos Sintético/Analítico), com a
-divergência documentada aqui e nos comentários da spec/Page Object
-correspondentes.
-
-**Melhoria proposta:** alinhar o documento de especificação à tela
-realmente entregue (ou, se a intenção original — relatório de movimentação
-filtrável por área — for a desejada, tratar a tela atual como um defeito de
-implementação a corrigir).
-
-### 6.2 Defeitos encontrados (bugs)
+### 5. Defeitos encontrados (bugs)
 
 23 defeitos foram encontrados ao longo da automação das 5 USs e das sessões
 exploratórias (seção 8) — passos para reproduzir, causa raiz, severidade e
@@ -258,7 +119,7 @@ trás da estratégia de retentativa descrita na seção 2.3.
 
 ---
 
-## 7. Cenários de teste
+## 6. Cenários de teste
 
 Cada cenário abaixo corresponde a um `it(...)` implementado e executado
 (nomes conforme a suíte real). Detalhes de passos ficam nos próprios
@@ -343,13 +204,6 @@ specs/Page Objects, comentados em português.
 Complementam a automação com sessões manuais (SBTM — session-based test
 management) focadas em áreas não cobertas pelas 5 USs, transversais de UX,
 segurança observacional e aprofundamento dos bugs já mapeados.
-
-**⚠️ Aviso legal**: testes de segurança ATIVOS (SQL injection com
-payloads, força bruta, tentativa de bypass de autenticação) **não foram
-executados** neste desafio por não haver autorização por escrito para
-pentest do sistema. As verificações abaixo são **passivas/observacionais**
-— inspeção de mensagens, headers, comportamento com caracteres benignos.
-Recomenda-se auditoria de segurança dedicada, com autorização formal.
 
 **Evidências**: `docs/evidencias/exploratorios/<sessao>/<ID>-descricao.png|mp4`.
 Bugs novos encontrados aqui devem ser registrados em `docs/bugs-encontrados.md`
@@ -482,20 +336,9 @@ seguindo o padrão BUG-08, BUG-09...
 | B04 | BUG-06 na prática | Contar `<option>` do select de Subárea sem filtro | Combo deveria filtrar por área | Loga [ACHADO] se > 3 opções |
 | B05 | Cache-Control ausente (BUG-10) | Inspecionar header em `/home/index` | `Cache-Control: no-store` ou similar | Loga [ACHADO] se ausente |
 
-### Como registrar cada sessão
-
-1. Executar os cenários da tabela (ou variações que surgirem — testes
-   exploratórios podem seguir "trilhas" a partir de achados).
-2. Preencher a coluna **Observado** com o resultado real.
-3. Gravar prints (PNG) / vídeos curtos (MP4) em
-   `docs/evidencias/exploratorios/sessao-XX-nome/`, com nome iniciando pelo
-   ID do cenário (ex.: `L01-enumeracao.png`).
-4. Cada defeito confirmado vira um novo bug em
-   [`bugs-encontrados.md`](bugs-encontrados.md) (BUG-08+).
-
 ---
 
-## 9. Evidências
+## 7. Evidências
 
 - Relatório HTML consolidado (mochawesome) da execução de referência:
   [`docs/evidencias/relatorio-execucao.html`](evidencias/relatorio-execucao.html)
@@ -509,7 +352,7 @@ seguindo o padrão BUG-08, BUG-09...
 - Relatório de defeitos encontrados (passos para reproduzir, evidência):
   [`docs/bugs-encontrados.md`](bugs-encontrados.md).
 
-## 10. Melhorias propostas (resumo)
+## 8. Melhorias propostas (resumo)
 
 1. Corrigir os defeitos documentados em
    [docs/bugs-encontrados.md](bugs-encontrados.md) (campo Colaborador nos
