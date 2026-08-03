@@ -1,8 +1,7 @@
 # Inventário CTI — Suíte de Testes Automatizados (Cypress + TypeScript)
 
-Suíte de testes end-to-end para o sistema **Inventário CTI**, desenvolvida
-para o *Desafio de Automação de Testes* da Procuradoria-Geral do Estado do
-Ceará (PGE-CE) — vaga de Analista de Testes.
+Testes end-to-end para o sistema **Inventário CTI**, da Procuradoria-Geral do Estado do
+Ceará (PGE-CE)
 
 > **Status:** suíte completa, validada de ponta a ponta contra o ambiente
 > real (http://testeqa.pge.ce.gov.br). Execução de referência: **85/85
@@ -11,7 +10,7 @@ Ceará (PGE-CE) — vaga de Analista de Testes.
 > divergência de especificação foram encontrados e documentados — ver
 > [Achados](#achados-bugs-e-divergência-de-especificação).
 
-**estrutura do projeto**,
+**Estrutura do projeto**,
 **plano de teste e documentação**, **implementação dos testes** e
 **evidências/relatórios com proposta de melhorias**.
 
@@ -28,7 +27,6 @@ Ceará (PGE-CE) — vaga de Analista de Testes.
 - `pdf-parse` (via `cy.task`) para validar conteúdo dos PDFs gerados
   (Termos de Responsabilidade/Empréstimo e Relatórios)
 - `mochawesome` + `mochawesome-merge` para relatório de execução consolidado
-- GitHub Actions para execução em CI
 
 ## Estrutura do projeto
 
@@ -73,8 +71,7 @@ npx cypress install   # garante o binário do Cypress baixado/verificado
 
 ## Configuração de credenciais
 
-As credenciais de acesso **não são versionadas**. Copie o arquivo de
-exemplo e preencha com os dados fornecidos no desafio:
+As credenciais de acesso **não são versionadas**.
 
 ```bash
 cp cypress.env.json.example cypress.env.json
@@ -102,7 +99,7 @@ Modo interativo (Test Runner):
 npm run cy:open
 ```
 
-Modo headless (linha de comando, gera vídeo + relatório):
+Modo headless (linha de comando, gera vídeo e relatório):
 
 ```bash
 npm run cy:run
@@ -124,13 +121,6 @@ npm run test:exploratorio:transversal
 npm run test:exploratorio:ativos
 npm run test:exploratorio:aprofundamento
 ```
-
-> **Nota sobre o ambiente de teste:** o ambiente é compartilhado entre
-> todos os candidatos rodando este desafio simultaneamente. A suíte foi
-> desenhada para lidar com isso (ver
-> [estratégia de massa de dados](docs/plano-de-teste.md#23-massa-de-dados-e-o-problema-do-ativo-disponível)),
-> mas o tempo total da suíte completa (11 specs) fica em torno de 15–20
-> minutos, por depender de dados reais e mutáveis do ambiente.
 
 ## Relatórios e evidências
 
