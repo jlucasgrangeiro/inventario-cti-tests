@@ -1,0 +1,40 @@
+{
+  "name": "inventario-cti-tests",
+  "version": "1.0.0",
+  "description": "Suite de testes automatizados (Cypress + TypeScript) para o sistema Inventario CTI - Desafio PGE-CE",
+  "private": true,
+  "scripts": {
+    "cy:open": "cypress open",
+    "cy:run": "cypress run",
+    "cy:run:chrome": "cypress run --browser chrome",
+    "cy:run:headless": "cypress run --headless",
+    "test": "cypress run",
+    "test:us01": "cypress run --spec \"cypress/e2e/01-cadastro-atribuicoes/**/*.cy.ts\"",
+    "test:us02": "cypress run --spec \"cypress/e2e/02-editar-atribuicoes/**/*.cy.ts\"",
+    "test:us03": "cypress run --spec \"cypress/e2e/03-geracao-termos/**/*.cy.ts\"",
+    "test:us04": "cypress run --spec \"cypress/e2e/04-relatorio-movimentacao/**/*.cy.ts\"",
+    "test:us05": "cypress run --spec \"cypress/e2e/05-relatorio-atribuicoes-area/**/*.cy.ts\"",
+    "test:exploratorio:login": "cypress run --spec \"cypress/e2e/06-login-exploratorio/**/*.cy.ts\"",
+    "test:exploratorio:usuarios": "cypress run --spec \"cypress/e2e/07-usuarios-exploratorio/**/*.cy.ts\"",
+    "test:exploratorio:areas": "cypress run --spec \"cypress/e2e/08-areas-exploratorio/**/*.cy.ts\"",
+    "test:exploratorio:transversal": "cypress run --spec \"cypress/e2e/09-transversal-exploratorio/**/*.cy.ts\"",
+    "test:exploratorio:ativos": "cypress run --spec \"cypress/e2e/10-ativos-exploratorio/**/*.cy.ts\"",
+    "test:exploratorio:aprofundamento": "cypress run --spec \"cypress/e2e/11-bugs-aprofundamento/**/*.cy.ts\"",
+    "report:merge": "mochawesome-merge report/mochawesome-report/*.json > report/output.json",
+    "report:generate": "marge report/output.json -f report -o report",
+    "posttest": "npm run report:merge && npm run report:generate"
+  },
+  "devDependencies": {
+    "cypress": "^13.15.0",
+    "typescript": "^5.6.0",
+    "pdf-parse": "^1.1.1",
+    "@types/pdf-parse": "^1.1.4",
+    "mochawesome": "^7.1.3",
+    "mochawesome-merge": "^4.3.0",
+    "mochawesome-report-generator": "^6.2.0",
+    "cypress-multi-reporters": "^1.6.4"
+  },
+  "allowScripts": {
+    "cypress@13.17.0": true
+  }
+}
