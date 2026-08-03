@@ -3,7 +3,7 @@
 **Projeto:** Desafio de Automação de Testes — Sistema Inventário CTI (PGE-CE)
 **Ambiente sob teste:** http://testeqa.pge.ce.gov.br
 **Ferramenta de automação:** Cypress 13 + TypeScript
-**Autor:** Suíte desenvolvida para o processo seletivo de Analista de Testes
+**Autor:** Joao Lucas
 
 ---
 
